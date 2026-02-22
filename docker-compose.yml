@@ -1,0 +1,58 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://votes:${POSTGRES_PASSWORD}@postgres:5432/votes
+      - REDIS_URL=redis://redis:6379
+      - OIDC_ISSUER=https://auth.snir.sh/application/o/votes/
+      - OIDC_CLIENT_ID=jPNKPrV3uouhNtJTyz8BzkTPSkSZ1xoTIZ81cK50
+      - APP_URL=https://votes.snir.sh
+      - PORT=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.votes.rule=Host(`votes.snir.sh`)"
+      - "traefik.http.routers.votes.entrypoints=websecure"
+      - "traefik.http.routers.votes.tls.certresolver=letsencrypt"
+      - "traefik.http.services.votes.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.votes-sse.headers.customresponseheaders.X-Accel-Buffering=no"
+      - "traefik.http.routers.votes.middlewares=votes-sse"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=votes
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=votes
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U votes"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  redis-data:

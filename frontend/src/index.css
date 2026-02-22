@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Base direction is set on <html> via JS */
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+html[dir="ltr"] {
+  direction: ltr;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 min-h-screen;
+}
