@@ -9,6 +9,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - OIDC_ISSUER=https://auth.snir.sh/application/o/votes/
       - OIDC_CLIENT_ID=jPNKPrV3uouhNtJTyz8BzkTPSkSZ1xoTIZ81cK50
+      - OIDC_USERINFO_URI=https://auth.snir.sh/application/o/userinfo/
       - APP_URL=https://votes.snir.sh
       - PORT=3000
     depends_on:

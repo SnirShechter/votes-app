@@ -37,7 +37,8 @@ async function fetchUserinfo(token: string): Promise<UserinfoCache> {
     return cached;
   }
 
-  const userinfoUrl = `${process.env.OIDC_ISSUER}userinfo/`;
+  const userinfoUrl = process.env.OIDC_USERINFO_URI ||
+    `${process.env.OIDC_ISSUER}userinfo/`;
   const response = await fetch(userinfoUrl, {
     headers: { Authorization: `Bearer ${token}` },
   });
