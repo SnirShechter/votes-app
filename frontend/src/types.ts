@@ -80,3 +80,15 @@ export interface Member {
   role: 'admin' | 'voter';
   joinedAt: string;
 }
+
+export interface ResultsData {
+  title: string;
+  status: 'draft' | 'active' | 'finished';
+  currentQuestionIndex: number | null;
+  questions: QuestionResult[];
+}
+
+export interface MyVote {
+  questionId: string;
+  optionIds: string[];
+}

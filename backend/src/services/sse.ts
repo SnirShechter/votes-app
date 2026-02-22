@@ -1,11 +1,12 @@
-import Redis from 'ioredis';
+import RedisModule from 'ioredis';
+const Redis = RedisModule.default ?? RedisModule;
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 
 const pollSubscribers = new Map<string, {
   refCount: number;
   handlers: Set<(message: string) => void>;
-  subscriber: Redis;
+  subscriber: InstanceType<typeof Redis>;
 }>();
 
 export function subscribeToPoll(

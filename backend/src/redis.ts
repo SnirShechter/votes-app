@@ -1,4 +1,5 @@
-import Redis from 'ioredis';
+import RedisModule from 'ioredis';
+const Redis = RedisModule.default ?? RedisModule;
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
 
