@@ -68,6 +68,7 @@ async function fetchUserinfo(token: string): Promise<UserinfoCache> {
  * Try JWT first -> catch -> fetch userinfo (opaque token).
  */
 async function resolveUser(token: string): Promise<UserinfoCache> {
+  let jwtError: string = '';
   try {
     const payload = await verifyJwt(token);
     return {
@@ -76,11 +77,61 @@ async function resolveUser(token: string): Promise<UserinfoCache> {
       name: (payload as any).name || (payload as any).preferred_username || '',
       expiresAt: Date.now() + USERINFO_CACHE_TTL,
     };
-  } catch {
-    // JWT failed - token is opaque, use userinfo endpoint
+  } catch (err: any) {
+    jwtError = err.message || String(err);
+    console.log(`JWT verification failed (expected for opaque tokens): ${jwtError}`);
   }
 
-  return await fetchUserinfo(token);
+  try {
+    return await fetchUserinfo(token);
+  } catch (err: any) {
+    console.error(`Both JWT and userinfo failed. JWT: ${jwtError}. Userinfo: ${err.message}`);
+    throw err;
+  }
+}
+
+/**
+ * Debug endpoint handler — returns auth diagnostic info.
+ */
+export async function debugAuth(c: any) {
+  const userinfoUrl = process.env.OIDC_USERINFO_URI ||
+    `${process.env.OIDC_ISSUER}userinfo/`;
+  const authHeader = c.req.header('Authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  const info: Record<string, unknown> = {
+    oidcIssuer: process.env.OIDC_ISSUER,
+    userinfoUrl,
+    oidcUserinfoUri: process.env.OIDC_USERINFO_URI || '(not set)',
+    hasToken: !!token,
+    tokenPrefix: token ? token.substring(0, 10) + '...' : null,
+  };
+
+  if (token) {
+    // Test userinfo call
+    try {
+      const resp = await fetch(userinfoUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await resp.text();
+      info.userinfoStatus = resp.status;
+      info.userinfoBody = body.substring(0, 500);
+    } catch (err: any) {
+      info.userinfoError = err.message;
+    }
+
+    // Test DNS/connectivity
+    try {
+      const resp = await fetch(userinfoUrl, { method: 'OPTIONS' });
+      info.connectivityOk = true;
+      info.connectivityStatus = resp.status;
+    } catch (err: any) {
+      info.connectivityOk = false;
+      info.connectivityError = err.message;
+    }
+  }
+
+  return c.json(info);
 }
 
 /**
@@ -102,7 +153,7 @@ export async function requireAuth(c: any, next: Next) {
     c.set('userName', user.name);
   } catch (err: any) {
     console.error('requireAuth failed:', err.message);
-    return c.json({ error: 'Invalid or expired token' }, 401);
+    return c.json({ error: 'Invalid or expired token', detail: err.message }, 401);
   }
 
   await next();

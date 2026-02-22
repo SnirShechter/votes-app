@@ -1,10 +1,12 @@
 import { Hono } from 'hono';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, debugAuth } from '../middleware/auth.js';
 import { query, queryOne } from '../db.js';
 import { publishEvent } from '../redis.js';
 import type { AppEnv } from '../types.js';
 
 const authRoutes = new Hono<AppEnv>();
+
+authRoutes.get('/debug', debugAuth);
 
 authRoutes.get('/me', requireAuth, async (c: any) => {
   const sub = c.get('userId');
