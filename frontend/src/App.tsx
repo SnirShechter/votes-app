@@ -9,11 +9,13 @@ import { ManagePoll } from './pages/ManagePoll';
 import { VotePage } from './pages/VotePage';
 import { ResultsPage } from './pages/ResultsPage';
 import { JoinPage } from './pages/JoinPage';
+import { DebugAuth } from './pages/DebugAuth';
 
 export function App() {
   return (
     <Routes>
       <Route path="/callback" element={<CallbackPage />} />
+      <Route path="/debug" element={<RequireAuth><DebugAuth /></RequireAuth>} />
       <Route path="/join/:token" element={<RequireAuth><JoinPage /></RequireAuth>} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route path="/" element={<Dashboard />} />
