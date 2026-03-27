@@ -22,6 +22,7 @@ services:
       - "traefik.http.routers.votes.rule=Host(`votes.snir.sh`)"
       - "traefik.http.routers.votes.entrypoints=websecure"
       - "traefik.http.routers.votes.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.votes.service=votes"
       - "traefik.http.services.votes.loadbalancer.server.port=3000"
       - "traefik.http.middlewares.votes-sse.headers.customresponseheaders.X-Accel-Buffering=no"
       - "traefik.http.routers.votes.middlewares=votes-sse"
